@@ -1,12 +1,10 @@
+public import Cardinal
 public import Index
-public import Memory_Address
-public import Memory_Alignment
+public import Memory
 public import Memory_Allocator_Primitive
 public import Memory_Allocator_Protocol
-public import Memory_Heap
-public import Memory_Primitive
-public import Memory_Region
 public import Storage
+public import Tagged
 
 extension Storage where Allocation: Memory.Region & ~Copyable {
 
@@ -15,7 +13,7 @@ extension Storage where Allocation: Memory.Region & ~Copyable {
     public struct Contiguous<Element: ~Copyable>: ~Copyable {
 
         @usableFromInline
-        internal var _capacity: Index<Element>.Count
+        internal var _capacity: Tagged<Element, Cardinal>
 
         @usableFromInline
         internal var _initialization: Store.Initialization<Element>
@@ -26,7 +24,7 @@ extension Storage where Allocation: Memory.Region & ~Copyable {
         @inlinable
         public init(
             allocation: consuming Allocation,
-            capacity: Index<Element>.Count,
+            capacity: Tagged<Element, Cardinal>,
             initialization: Store.Initialization<Element> = .empty
         ) {
             self.allocation = allocation
@@ -37,8 +35,8 @@ extension Storage where Allocation: Memory.Region & ~Copyable {
         deinit {
             _initialization.forEach { range in
                 guard !range.isEmpty else { return }
-                unsafe (_base + Index<Element>.Offset(fromZero: range.lowerBound))
-                    .deinitialize(count: range.count)
+                unsafe (_base + range.lowerBound)
+                    .deinitialize(count: Int(bitPattern: range.count.underlying.rawValue))
             }
         }
     }
@@ -53,17 +51,17 @@ extension Storage.Contiguous where Allocation: Memory.Region & ~Copyable, Elemen
 
     @inlinable
     package func _ptr(at slot: Index<Element>) -> UnsafeMutablePointer<Element> {
-        unsafe _base + Index<Element>.Offset(fromZero: slot)
+        unsafe _base + slot
     }
 }
 
 extension Storage.Contiguous where Allocation: ~Copyable, Element: ~Copyable {
 
     @inlinable
-    public var capacity: Index<Element>.Count { _capacity }
+    public var capacity: Tagged<Element, Cardinal> { _capacity }
 
     @inlinable
-    public var count: Index<Element>.Count { _initialization.count }
+    public var count: Tagged<Element, Cardinal> { _initialization.count }
 
     @inlinable
     public var isEmpty: Bool { _initialization.isEmpty }
@@ -79,7 +77,7 @@ extension Storage.Contiguous where Allocation: ~Copyable, Element: ~Copyable {
 
     @inlinable
     public static func create<Resource: Memory.Growable & ~Copyable>(
-        minimumCapacity: Index<Element>.Count
+        minimumCapacity: Tagged<Element, Cardinal>
     ) -> Self where Allocation == Memory.Allocator<Resource> {
         do {
             return try Self(minimumCapacity: minimumCapacity)
@@ -92,9 +90,9 @@ extension Storage.Contiguous where Allocation: ~Copyable, Element: ~Copyable {
 
     @inlinable
     public init<Resource: Memory.Growable & ~Copyable>(
-        minimumCapacity: Index<Element>.Count
+        minimumCapacity: Tagged<Element, Cardinal>
     ) throws(__StorageContiguousError) where Allocation == Memory.Allocator<Resource> {
-        let capacity = Int(bitPattern: minimumCapacity)
+        let capacity = Int(bitPattern: minimumCapacity.underlying.rawValue)
         let (capacityInBytes, overflowed) = capacity.multipliedReportingOverflow(
             by: MemoryLayout<Element>.stride
         )
@@ -109,15 +107,19 @@ extension Storage.Contiguous where Allocation: ~Copyable, Element: ~Copyable {
     }
 }
 
-extension Storage.Contiguous where Allocation == Memory.Allocator<Memory.Heap>, Element: Copyable {
+extension Storage.Contiguous where Allocation: ~Copyable, Element: Copyable {
 
     @inlinable
-    public borrowing func copy() -> Self {
+    public borrowing func copy<Resource: Memory.Growable & ~Copyable>() -> Self
+    where Allocation == Memory.Allocator<Resource> {
         var out = Self.create(minimumCapacity: _capacity)
         _initialization.forEach { range in
             guard !range.isEmpty else { return }
-            let offset = Index<Element>.Offset(fromZero: range.lowerBound)
-            unsafe (out._base + offset).initialize(from: _base + offset, count: range.count)
+            let count = Int(bitPattern: range.count.underlying.rawValue)
+            unsafe (out._base + range.lowerBound).initialize(
+                from: _base + range.lowerBound,
+                count: count
+            )
         }
         out._initialization = _initialization
         return out

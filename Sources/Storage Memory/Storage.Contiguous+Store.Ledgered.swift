@@ -1,4 +1,4 @@
-public import Memory_Region
+public import Memory
 public import Storage
 
 extension Storage.Contiguous: Store.Ledgered.`Protocol`

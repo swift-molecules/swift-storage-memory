@@ -19,7 +19,7 @@ let package = Package(
     ],
     dependencies: [
         .package(
-            url: "https://github.com/swift-molecules/swift-storage.git",
+            url: "https://github.com/swift-atoms/swift-storage.git",
             branch: "main"
         ),
         .package(
@@ -35,6 +35,10 @@ let package = Package(
             branch: "main"
         ),
         .package(
+            url: "https://github.com/swift-molecules/swift-ordinal-comparison.git",
+            branch: "main"
+        ),
+        .package(
             url: "https://github.com/swift-atoms/swift-span.git",
             branch: "main"
         ),
@@ -43,11 +47,19 @@ let package = Package(
             branch: "main"
         ),
         .package(
-            url: "https://github.com/swift-molecules/swift-memory-heap.git",
+            url: "https://github.com/swift-atoms/swift-cardinal.git",
+            branch: "main"
+        ),
+        .package(
+            url: "https://github.com/swift-atoms/swift-tagged.git",
             branch: "main"
         ),
         .package(
             url: "https://github.com/swift-molecules/swift-memory-allocation.git",
+            branch: "main"
+        ),
+        .package(
+            url: "https://github.com/swift-molecules/swift-memory-small.git",
             branch: "main"
         ),
     ],
@@ -62,18 +74,13 @@ let package = Package(
                     package: "swift-affine"
                 ),
                 .product(
-                    name: "Ordinal Standard Library Integration",
-                    package: "swift-ordinal"
+                    name: "Ordinal Comparison",
+                    package: "swift-ordinal-comparison"
                 ),
-                .product(name: "Span Protocol", package: "swift-span"),
-                .product(name: "Memory Primitive", package: "swift-memory"),
-                .product(name: "Memory Region", package: "swift-memory"),
-                .product(name: "Memory Address", package: "swift-memory"),
-                .product(name: "Memory Alignment", package: "swift-memory"),
-                .product(
-                    name: "Memory Standard Library Integration",
-                    package: "swift-memory"
-                ),
+                .product(name: "Span", package: "swift-span"),
+                .product(name: "Memory", package: "swift-memory"),
+                .product(name: "Cardinal", package: "swift-cardinal"),
+                .product(name: "Tagged", package: "swift-tagged"),
                 .product(
                     name: "Memory Allocator Primitive",
                     package: "swift-memory-allocation"
@@ -82,19 +89,34 @@ let package = Package(
                     name: "Memory Allocator Protocol",
                     package: "swift-memory-allocation"
                 ),
-                .product(name: "Memory Heap", package: "swift-memory-heap"),
             ]
         ),
         .testTarget(
             name: "Storage Memory Tests",
             dependencies: [
                 "Storage Memory",
+                .product(name: "Storage", package: "swift-storage"),
                 .product(name: "Index", package: "swift-index"),
                 .product(
                     name: "Memory Allocator Primitive",
                     package: "swift-memory-allocation"
                 ),
-                .product(name: "Memory Heap", package: "swift-memory-heap"),
+                .product(name: "Memory", package: "swift-memory"),
+                .product(name: "Cardinal", package: "swift-cardinal"),
+                .product(name: "Tagged", package: "swift-tagged"),
+                .product(
+                    name: "Tagged Standard Library Integration",
+                    package: "swift-tagged"
+                ),
+                .product(name: "Memory Small", package: "swift-memory-small"),
+                .product(
+                    name: "Ordinal Comparison",
+                    package: "swift-ordinal-comparison"
+                ),
+                .product(
+                    name: "Ordinal Standard Library Integration",
+                    package: "swift-ordinal"
+                ),
             ]
         ),
     ],

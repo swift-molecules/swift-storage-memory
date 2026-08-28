@@ -1,11 +1,18 @@
+import Cardinal
 import Index
+import Memory
 import Memory_Allocator_Primitive
-import Memory_Heap
+import Memory_Small
+import Ordinal_Comparison
+import Ordinal_Standard_Library_Integration
+import Storage
 import Storage_Memory
+import Tagged
+import Tagged_Standard_Library_Integration
 import Testing
 
 private typealias DenseStorage<Element: ~Copyable> =
-    Storage<Memory.Allocator<Memory.Heap>>.Contiguous<Element>
+    Storage<Memory.Allocator<Memory.Small<0>>>.Contiguous<Element>
 
 private final class Item: @unchecked Sendable {
     let id: Int
@@ -37,7 +44,7 @@ struct `Storage Contiguous Tests` {
     @Test
     func `near-limit capacity throws typed overflow instead of trapping`() {
 
-        let nearLimit = Index<Int64>.Count(UInt(Int.max))
+        let nearLimit = Tagged<Int64, Cardinal>(UInt(Int.max))
         #expect(throws: __StorageContiguousError.overflow(capacity: Int.max, stride: 8)) {
             _ = try DenseStorage<Int64>(minimumCapacity: nearLimit)
         }
@@ -45,7 +52,7 @@ struct `Storage Contiguous Tests` {
 
     @Test
     func `capacity above Int max throws typed overflow`() {
-        let aboveIntMax = Index<Int64>.Count(UInt(Int.max) + 1)
+        let aboveIntMax = Tagged<Int64, Cardinal>(UInt(Int.max) + 1)
         #expect(throws: __StorageContiguousError.self) {
             _ = try DenseStorage<Int64>(minimumCapacity: aboveIntMax)
         }
@@ -53,28 +60,30 @@ struct `Storage Contiguous Tests` {
 
     @Test
     func `throwing creation succeeds for a valid capacity`() throws {
-        let s = try DenseStorage<Int>(minimumCapacity: Index<Int>.Count(4))
+        let s = try DenseStorage<Int>(minimumCapacity: Tagged<Int, Cardinal>(4))
         let cap = s.capacity
         let empty = s.isEmpty
-        #expect(cap == Index<Int>.Count(4))
+        #expect(cap == Tagged<Int, Cardinal>(4))
         #expect(empty)
     }
 
     @Test
     func `create traps on byte-count overflow instead of overflowing arithmetic`() async {
         await #expect(processExitsWith: .failure) {
-            _ = DenseStorage<Int64>.create(minimumCapacity: Index<Int64>.Count(UInt(Int.max)))
+            _ = DenseStorage<Int64>.create(
+                minimumCapacity: Tagged<Int64, Cardinal>(UInt(Int.max))
+            )
         }
     }
 
     @Test
     func `create reports capacity count empty`() {
         Probe.reset()
-        let s = DenseStorage<Int>.create(minimumCapacity: Index<Int>.Count(4))
+        let s = DenseStorage<Int>.create(minimumCapacity: Tagged<Int, Cardinal>(4))
         let cap = s.capacity
         let cnt = s.count
         let empty = s.isEmpty
-        #expect(cap == Index<Int>.Count(4))
+        #expect(cap == Tagged<Int, Cardinal>(4))
         #expect(cnt == .zero)
         #expect(empty)
     }
@@ -82,7 +91,7 @@ struct `Storage Contiguous Tests` {
     @Test
     func `initialize subscript mutate move`() {
         Probe.reset()
-        var s = DenseStorage<Item>.create(minimumCapacity: Index<Item>.Count(4))
+        var s = DenseStorage<Item>.create(minimumCapacity: Tagged<Item, Cardinal>(4))
         s.initialize(at: 0, to: Item(7, value: 70))
         let v0 = s[0].value
         #expect(v0 == 70)
@@ -90,7 +99,7 @@ struct `Storage Contiguous Tests` {
         let v0b = s[0].value
         #expect(v0b == 71)
         let cnt = s.count
-        #expect(cnt == Index<Item>.Count(1))
+        #expect(cnt == Tagged<Item, Cardinal>(1))
         let moved = s.move(at: 0)
         let mv = moved.value
         let dEmpty = Probe.destroyed.isEmpty
@@ -104,7 +113,7 @@ struct `Storage Contiguous Tests` {
     @Test
     func `span projects initialized prefix`() {
         Probe.reset()
-        var s = DenseStorage<Item>.create(minimumCapacity: Index<Item>.Count(4))
+        var s = DenseStorage<Item>.create(minimumCapacity: Tagged<Item, Cardinal>(4))
         s.initialize(at: 0, to: Item(1, value: 10))
         s.initialize(at: 1, to: Item(2, value: 20))
         s.initialize(at: 2, to: Item(3, value: 30))
@@ -120,7 +129,7 @@ struct `Storage Contiguous Tests` {
     @Test
     func `mutable span mutates in place`() {
         Probe.reset()
-        var s = DenseStorage<Item>.create(minimumCapacity: Index<Item>.Count(4))
+        var s = DenseStorage<Item>.create(minimumCapacity: Tagged<Item, Cardinal>(4))
         s.initialize(at: 0, to: Item(1, value: 10))
         s.initialize(at: 1, to: Item(2, value: 20))
         do {
@@ -137,13 +146,13 @@ struct `Storage Contiguous Tests` {
     @Test
     func `output span append commits ledger`() {
         Probe.reset()
-        var s = DenseStorage<Item>.create(minimumCapacity: Index<Item>.Count(4))
+        var s = DenseStorage<Item>.create(minimumCapacity: Tagged<Item, Cardinal>(4))
         s.outputSpan.append(Item(1, value: 100))
         s.outputSpan.append(Item(2, value: 200))
         let cnt = s.count
         let v0 = s[0].value
         let v1 = s[1].value
-        #expect(cnt == Index<Item>.Count(2))
+        #expect(cnt == Tagged<Item, Cardinal>(2))
         #expect(v0 == 100)
         #expect(v1 == 200)
     }
@@ -151,11 +160,11 @@ struct `Storage Contiguous Tests` {
     @Test
     func `with output span windows the tail exactly`() {
         Probe.reset()
-        var s = DenseStorage<Item>.create(minimumCapacity: Index<Item>.Count(4))
+        var s = DenseStorage<Item>.create(minimumCapacity: Tagged<Item, Cardinal>(4))
         s.initialize(at: 0, to: Item(1, value: 10))
         var seenCapacity = -1
         var seenIsFull = false
-        s.withOutputSpan(addingCapacity: Index<Item>.Count(2)) { span in
+        s.withOutputSpan(addingCapacity: Tagged<Item, Cardinal>(2)) { span in
             seenCapacity = span.capacity
             span.append(Item(2, value: 20))
             span.append(Item(3, value: 30))
@@ -166,7 +175,7 @@ struct `Storage Contiguous Tests` {
         let v2 = s[2].value
         #expect(seenCapacity == 2)
         #expect(seenIsFull)
-        #expect(cnt == Index<Item>.Count(3))
+        #expect(cnt == Tagged<Item, Cardinal>(3))
         #expect(v1 == 20)
         #expect(v2 == 30)
 
@@ -179,17 +188,19 @@ struct `Storage Contiguous Tests` {
         let cntAfterZero = s.count
         #expect(zeroCapacity == 0)
         #expect(zeroIsFull)
-        #expect(cntAfterZero == Index<Item>.Count(3))
+        #expect(cntAfterZero == Tagged<Item, Cardinal>(3))
     }
 
     @Test
     func `with output span commits partial appends on throw`() {
         Probe.reset()
         enum Deliberate: Swift.Error { case thrown }
-        var s = DenseStorage<Item>.create(minimumCapacity: Index<Item>.Count(4))
+        var s = DenseStorage<Item>.create(minimumCapacity: Tagged<Item, Cardinal>(4))
         var didThrow = false
         do {
-            try s.withOutputSpan(addingCapacity: Index<Item>.Count(3)) { span throws(Deliberate) in
+            try s.withOutputSpan(
+                addingCapacity: Tagged<Item, Cardinal>(3)
+            ) { span throws(Deliberate) in
                 span.append(Item(1, value: 10))
                 throw Deliberate.thrown
             }
@@ -199,7 +210,7 @@ struct `Storage Contiguous Tests` {
         let cnt = s.count
         let v0 = s[0].value
         #expect(didThrow)
-        #expect(cnt == Index<Item>.Count(1))
+        #expect(cnt == Tagged<Item, Cardinal>(1))
         #expect(v0 == 10)
     }
 
@@ -207,7 +218,7 @@ struct `Storage Contiguous Tests` {
     func `teardown destroys live prefix once`() {
         Probe.reset()
         do {
-            var s = DenseStorage<Item>.create(minimumCapacity: Index<Item>.Count(8))
+            var s = DenseStorage<Item>.create(minimumCapacity: Tagged<Item, Cardinal>(8))
             s.initialize(at: 0, to: Item(1))
             s.initialize(at: 1, to: Item(2))
             s.initialize(at: 2, to: Item(3))
@@ -222,14 +233,14 @@ struct `Storage Contiguous Tests` {
     {
 
         Probe.reset()
-        var s = DenseStorage<Int>.create(minimumCapacity: Index<Int>.Count(4))
+        var s = DenseStorage<Int>.create(minimumCapacity: Tagged<Int, Cardinal>(4))
         s.initialize(at: 0, to: 10)
         s.initialize(at: 1, to: 11)
         s.initialize(at: 2, to: 12)
 
-        let tail = Swift.Range<Index<Int>>(start: 2, count: .one)
-        let notTail0 = Swift.Range<Index<Int>>(start: 0, count: .one)
-        let notTail1 = Swift.Range<Index<Int>>(start: 1, count: .one)
+        let tail = Index<Int>(UInt(2))..<Index<Int>(UInt(3))
+        let notTail0 = Index<Int>(UInt(0))..<Index<Int>(UInt(1))
+        let notTail1 = Index<Int>(UInt(1))..<Index<Int>(UInt(2))
         let tailIsValid = s._isValidPrefixTailRemoval(range: tail)
         let notTail0IsValid = s._isValidPrefixTailRemoval(range: notTail0)
         let notTail1IsValid = s._isValidPrefixTailRemoval(range: notTail1)
@@ -238,8 +249,14 @@ struct `Storage Contiguous Tests` {
         #expect(!notTail1IsValid)
 
         s.initialization = .two(
-            first: Swift.Range<Index<Int>>(start: 2, count: .one),
-            second: Swift.Range<Index<Int>>(start: 0, count: .one)
+            first: Store.Span(
+                start: Index<Int>(UInt(2)),
+                count: Tagged<Int, Cardinal>(1)
+            ),
+            second: Store.Span(
+                start: Index<Int>(UInt(0)),
+                count: Tagged<Int, Cardinal>(1)
+            )
         )
         let notTail0IsValidWhenWrapped = s._isValidPrefixTailRemoval(range: notTail0)
         #expect(notTail0IsValidWhenWrapped)
@@ -253,7 +270,7 @@ struct `Storage Contiguous Tests` {
     @Test
     func `copy deep copies live prefix`() {
         Probe.reset()
-        var s = DenseStorage<Int>.create(minimumCapacity: Index<Int>.Count(4))
+        var s = DenseStorage<Int>.create(minimumCapacity: Tagged<Int, Cardinal>(4))
         s.initialize(at: 0, to: 7)
         s.initialize(at: 1, to: 8)
         let dup = s.copy()
@@ -264,7 +281,7 @@ struct `Storage Contiguous Tests` {
         let src0 = s[0]
         #expect(dup0 == 7)
         #expect(dup1 == 8)
-        #expect(dupCount == Index<Int>.Count(2))
+        #expect(dupCount == Tagged<Int, Cardinal>(2))
         #expect(src0 == 99)
     }
 
@@ -274,24 +291,30 @@ struct `Storage Contiguous Tests` {
     {
 
         Probe.reset()
-        var s = DenseStorage<Int>.create(minimumCapacity: Index<Int>.Count(6))
+        var s = DenseStorage<Int>.create(minimumCapacity: Tagged<Int, Cardinal>(6))
         for i in 0..<6 {
-            s.initialize(at: Index<Int>(Ordinal(UInt(i))), to: i)
+            s.initialize(at: Index<Int>(UInt(i)), to: i)
         }
         let wrapped = Store.Initialization<Int>.two(
-            first: Index<Int>(Ordinal(UInt(4)))..<Index<Int>(Ordinal(UInt(6))),
-            second: Index<Int>(Ordinal(UInt(0)))..<Index<Int>(Ordinal(UInt(2)))
+            first: Store.Span(
+                start: Index<Int>(UInt(4)),
+                count: Tagged<Int, Cardinal>(2)
+            ),
+            second: Store.Span(
+                start: Index<Int>(UInt(0)),
+                count: Tagged<Int, Cardinal>(2)
+            )
         )
         s.initialization = wrapped
         let dup = s.copy()
         let dupInitialization = dup.initialization
         let dupCount = dup.count
         #expect(dupInitialization == wrapped)
-        #expect(dupCount == Index<Int>.Count(4))
-        let dup4 = dup[Index<Int>(Ordinal(UInt(4)))]
-        let dup5 = dup[Index<Int>(Ordinal(UInt(5)))]
-        let dup0 = dup[Index<Int>(Ordinal(UInt(0)))]
-        let dup1 = dup[Index<Int>(Ordinal(UInt(1)))]
+        #expect(dupCount == Tagged<Int, Cardinal>(4))
+        let dup4 = dup[Index<Int>(UInt(4))]
+        let dup5 = dup[Index<Int>(UInt(5))]
+        let dup0 = dup[Index<Int>(UInt(0))]
+        let dup1 = dup[Index<Int>(UInt(1))]
         #expect(dup4 == 4)
         #expect(dup5 == 5)
         #expect(dup0 == 0)
@@ -312,10 +335,10 @@ struct `Storage Contiguous Sendable Tests` {
     @Test
     func `sendable admits move-only elements (W2-F1 regression)`() {
         let moveOnly = DenseStorage<MoveOnlyElement>.create(
-            minimumCapacity: Index<MoveOnlyElement>.Count(1)
+            minimumCapacity: Tagged<MoveOnlyElement, Cardinal>(1)
         )
         requireSendable(moveOnly)
-        let copyable = DenseStorage<Int>.create(minimumCapacity: Index<Int>.Count(1))
+        let copyable = DenseStorage<Int>.create(minimumCapacity: Tagged<Int, Cardinal>(1))
         requireSendable(copyable)
         #expect(Bool(true))
     }
