@@ -1,9 +1,17 @@
+public import Ordinal
+public import Ordinal_Protocol
+public import Ordinal_Standard_Library_Integration
 public import Cardinal
+public import Cardinal_Carrier
+public import Cardinal_Tagged
 public import Index
 public import Memory
 public import Memory_Allocator
 public import Memory_Allocator_Protocol
 public import Storage
+public import Store
+public import Store_Initialization
+public import Store_Protocol
 public import Tagged
 
 extension Storage where Allocation: Memory.Region & ~Copyable {
@@ -35,7 +43,7 @@ extension Storage where Allocation: Memory.Region & ~Copyable {
         deinit {
             _initialization.forEach { range in
                 guard !range.isEmpty else { return }
-                unsafe (_base + range.lowerBound)
+                unsafe (_base + Int(bitPattern: range.lowerBound.ordinal.rawValue))
                     .deinitialize(count: Int(bitPattern: range.count.underlying.rawValue))
             }
         }
@@ -51,7 +59,7 @@ extension Storage.Contiguous where Allocation: Memory.Region & ~Copyable, Elemen
 
     @inlinable
     package func _ptr(at slot: Index<Element>) -> UnsafeMutablePointer<Element> {
-        unsafe _base + slot
+        unsafe _base + Int(bitPattern: slot.ordinal.rawValue)
     }
 }
 
@@ -116,8 +124,8 @@ extension Storage.Contiguous where Allocation: ~Copyable, Element: Copyable {
         _initialization.forEach { range in
             guard !range.isEmpty else { return }
             let count = Int(bitPattern: range.count.underlying.rawValue)
-            unsafe (out._base + range.lowerBound).initialize(
-                from: _base + range.lowerBound,
+            unsafe (out._base + Int(bitPattern: range.lowerBound.ordinal.rawValue)).initialize(
+                from: _base + Int(bitPattern: range.lowerBound.ordinal.rawValue),
                 count: count
             )
         }

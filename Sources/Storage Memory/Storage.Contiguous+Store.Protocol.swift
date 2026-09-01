@@ -1,10 +1,20 @@
 import Affine_Standard_Library_Integration
 public import Cardinal
+public import Cardinal_Carrier
+public import Cardinal_Tagged
 public import Index
 public import Memory
+public import Ordinal
+public import Ordinal_Cardinal
 public import Ordinal_Comparison
+public import Ordinal_Protocol
+public import Ordinal_Tagged
 public import Storage
+public import Store
+public import Store_Initialization
+public import Store_Protocol
 public import Tagged
+public import Tagged_Carrier
 
 extension Storage.Contiguous where Allocation: Memory.Region & ~Copyable, Element: ~Copyable {
 
@@ -29,7 +39,7 @@ extension Storage.Contiguous where Allocation: Memory.Region & ~Copyable, Elemen
     @inlinable
     public mutating func move(at slot: Index<Element>) -> Element {
         let element = unsafe _ptr(at: slot).move()
-        _initialization = .linear(count: count.subtracting(saturating: .one))
+        _initialization = .linear(count: count.subtract.saturating(.one))
         return element
     }
 }
@@ -39,12 +49,12 @@ extension Storage.Contiguous where Allocation: Memory.Region & ~Copyable, Elemen
     @inlinable
     package func _isValidPrefixTailRemoval(range removed: Swift.Range<Index<Element>>) -> Bool {
         guard initialization.isPrefixShaped, !removed.isEmpty else { return true }
-        return removed.upperBound == Index<Element>(initialization.count)
+        return removed.upperBound == Index<Element>(_unchecked: Ordinal(initialization.count.underlying))
     }
 
     @inlinable
     public mutating func deinitialize(at slot: Index<Element>) {
-        let removed = slot..<slot.advanced(by: Tagged<Element, Cardinal>.one)
+        let removed = slot..<slot + Tagged<Element, Cardinal>.one
         assert(
             _isValidPrefixTailRemoval(range: removed),
             "Storage.Contiguous.deinitialize(at:): slot is not the ledger's tail — move(at:)'s "

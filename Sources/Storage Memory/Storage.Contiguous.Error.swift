@@ -1,4 +1,7 @@
 public import Storage
+public import Store
+public import Store_Initialization
+public import Store_Protocol
 
 @_documentation(visibility: public)
 public enum __StorageContiguousError: Swift.Error, Sendable, Equatable {

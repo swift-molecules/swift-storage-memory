@@ -1,7 +1,13 @@
 public import Cardinal
+public import Cardinal_Carrier
+public import Cardinal_Tagged
 public import Memory
 public import Span
+public import Span_Protocol
 public import Storage
+public import Store
+public import Store_Initialization
+public import Store_Protocol
 public import Tagged
 
 extension Storage.Contiguous where Allocation: Memory.Region & ~Copyable, Element: ~Copyable {

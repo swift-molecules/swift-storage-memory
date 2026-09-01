@@ -19,6 +19,14 @@ let package = Package(
     ],
     dependencies: [
         .package(
+            url: "https://github.com/swift-molecules/swift-tagged-carrier.git",
+            branch: "main"
+        ),
+        .package(
+            url: "https://github.com/swift-atoms/swift-store.git",
+            branch: "main"
+        ),
+        .package(
             url: "https://github.com/swift-atoms/swift-storage.git",
             branch: "main"
         ),
@@ -64,6 +72,10 @@ let package = Package(
             name: "Storage Memory",
             dependencies: [
                 .product(name: "Storage", package: "swift-storage"),
+                .product(name: "Store", package: "swift-store"),
+                .product(name: "Store Initialization", package: "swift-store"),
+                .product(name: "Store Ledgered", package: "swift-store"),
+                .product(name: "Store Protocol", package: "swift-store"),
                 .product(name: "Index", package: "swift-index"),
                 .product(
                     name: "Affine Standard Library Integration",
@@ -76,6 +88,14 @@ let package = Package(
                 .product(name: "Span", package: "swift-span"),
                 .product(name: "Memory", package: "swift-memory"),
                 .product(name: "Cardinal", package: "swift-cardinal"),
+                .product(name: "Tagged Carrier", package: "swift-tagged-carrier"),
+                .product(name: "Cardinal Carrier", package: "swift-cardinal"),
+                .product(name: "Cardinal Tagged", package: "swift-cardinal"),
+                .product(name: "Ordinal", package: "swift-ordinal"),
+                .product(name: "Ordinal Protocol", package: "swift-ordinal"),
+                .product(name: "Ordinal Cardinal", package: "swift-ordinal"),
+                .product(name: "Ordinal Tagged", package: "swift-ordinal"),
+                .product(name: "Span Protocol", package: "swift-span"),
                 .product(name: "Tagged", package: "swift-tagged"),
                 .product(
                     name: "Memory Allocator",
@@ -90,8 +110,15 @@ let package = Package(
         .testTarget(
             name: "Storage Memory Tests",
             dependencies: [
+                .product(name: "Cardinal Carrier", package: "swift-cardinal"),
+                .product(name: "Ordinal", package: "swift-ordinal"),
+                .product(name: "Ordinal Tagged", package: "swift-ordinal"),
                 "Storage Memory",
                 .product(name: "Storage", package: "swift-storage"),
+                .product(name: "Store", package: "swift-store"),
+                .product(name: "Store Initialization", package: "swift-store"),
+                .product(name: "Store Ledgered", package: "swift-store"),
+                .product(name: "Store Protocol", package: "swift-store"),
                 .product(name: "Index", package: "swift-index"),
                 .product(
                     name: "Memory Allocator",

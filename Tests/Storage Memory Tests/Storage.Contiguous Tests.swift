@@ -1,3 +1,10 @@
+import Cardinal_Tagged
+import Cardinal_Carrier
+import Ordinal
+import Ordinal_Tagged
+import Store
+import Store_Initialization
+import Store_Protocol
 import Cardinal
 import Index
 import Memory
@@ -238,9 +245,9 @@ struct `Storage Contiguous Tests` {
         s.initialize(at: 1, to: 11)
         s.initialize(at: 2, to: 12)
 
-        let tail = Index<Int>(UInt(2))..<Index<Int>(UInt(3))
-        let notTail0 = Index<Int>(UInt(0))..<Index<Int>(UInt(1))
-        let notTail1 = Index<Int>(UInt(1))..<Index<Int>(UInt(2))
+        let tail = Index<Int>(_unchecked: Ordinal(2))..<Index<Int>(_unchecked: Ordinal(3))
+        let notTail0 = Index<Int>(_unchecked: Ordinal(0))..<Index<Int>(_unchecked: Ordinal(1))
+        let notTail1 = Index<Int>(_unchecked: Ordinal(1))..<Index<Int>(_unchecked: Ordinal(2))
         let tailIsValid = s._isValidPrefixTailRemoval(range: tail)
         let notTail0IsValid = s._isValidPrefixTailRemoval(range: notTail0)
         let notTail1IsValid = s._isValidPrefixTailRemoval(range: notTail1)
@@ -249,14 +256,8 @@ struct `Storage Contiguous Tests` {
         #expect(!notTail1IsValid)
 
         s.initialization = .two(
-            first: Store.Span(
-                start: Index<Int>(UInt(2)),
-                count: Tagged<Int, Cardinal>(1)
-            ),
-            second: Store.Span(
-                start: Index<Int>(UInt(0)),
-                count: Tagged<Int, Cardinal>(1)
-            )
+            first: Index<Int>(_unchecked: Ordinal(2))..<Index<Int>(_unchecked: Ordinal(3)),
+            second: Index<Int>(_unchecked: Ordinal(0))..<Index<Int>(_unchecked: Ordinal(1))
         )
         let notTail0IsValidWhenWrapped = s._isValidPrefixTailRemoval(range: notTail0)
         #expect(notTail0IsValidWhenWrapped)
@@ -293,17 +294,11 @@ struct `Storage Contiguous Tests` {
         Probe.reset()
         var s = DenseStorage<Int>.create(minimumCapacity: Tagged<Int, Cardinal>(6))
         for i in 0..<6 {
-            s.initialize(at: Index<Int>(UInt(i)), to: i)
+            s.initialize(at: Index<Int>(_unchecked: Ordinal(UInt(i))), to: i)
         }
         let wrapped = Store.Initialization<Int>.two(
-            first: Store.Span(
-                start: Index<Int>(UInt(4)),
-                count: Tagged<Int, Cardinal>(2)
-            ),
-            second: Store.Span(
-                start: Index<Int>(UInt(0)),
-                count: Tagged<Int, Cardinal>(2)
-            )
+            first: Index<Int>(_unchecked: Ordinal(4))..<Index<Int>(_unchecked: Ordinal(6)),
+            second: Index<Int>(_unchecked: Ordinal(0))..<Index<Int>(_unchecked: Ordinal(2))
         )
         s.initialization = wrapped
         let dup = s.copy()
@@ -311,10 +306,10 @@ struct `Storage Contiguous Tests` {
         let dupCount = dup.count
         #expect(dupInitialization == wrapped)
         #expect(dupCount == Tagged<Int, Cardinal>(4))
-        let dup4 = dup[Index<Int>(UInt(4))]
-        let dup5 = dup[Index<Int>(UInt(5))]
-        let dup0 = dup[Index<Int>(UInt(0))]
-        let dup1 = dup[Index<Int>(UInt(1))]
+        let dup4 = dup[Index<Int>(_unchecked: Ordinal(4))]
+        let dup5 = dup[Index<Int>(_unchecked: Ordinal(5))]
+        let dup0 = dup[Index<Int>(_unchecked: Ordinal(0))]
+        let dup1 = dup[Index<Int>(_unchecked: Ordinal(1))]
         #expect(dup4 == 4)
         #expect(dup5 == 5)
         #expect(dup0 == 0)
