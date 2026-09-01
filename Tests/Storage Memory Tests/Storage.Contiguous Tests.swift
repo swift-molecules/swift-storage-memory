@@ -1,7 +1,7 @@
 import Cardinal
 import Index
 import Memory
-import Memory_Allocator_Primitive
+import Memory_Allocator
 import Memory_Small
 import Ordinal_Comparison
 import Ordinal_Standard_Library_Integration

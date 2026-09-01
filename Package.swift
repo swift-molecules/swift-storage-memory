@@ -78,7 +78,7 @@ let package = Package(
                 .product(name: "Cardinal", package: "swift-cardinal"),
                 .product(name: "Tagged", package: "swift-tagged"),
                 .product(
-                    name: "Memory Allocator Primitive",
+                    name: "Memory Allocator",
                     package: "swift-memory-allocation"
                 ),
                 .product(
@@ -94,7 +94,7 @@ let package = Package(
                 .product(name: "Storage", package: "swift-storage"),
                 .product(name: "Index", package: "swift-index"),
                 .product(
-                    name: "Memory Allocator Primitive",
+                    name: "Memory Allocator",
                     package: "swift-memory-allocation"
                 ),
                 .product(name: "Memory", package: "swift-memory"),
