@@ -35,10 +35,6 @@ let package = Package(
             branch: "main"
         ),
         .package(
-            url: "https://github.com/swift-molecules/swift-ordinal-comparison.git",
-            branch: "main"
-        ),
-        .package(
             url: "https://github.com/swift-atoms/swift-span.git",
             branch: "main"
         ),
@@ -75,7 +71,7 @@ let package = Package(
                 ),
                 .product(
                     name: "Ordinal Comparison",
-                    package: "swift-ordinal-comparison"
+                    package: "swift-ordinal"
                 ),
                 .product(name: "Span", package: "swift-span"),
                 .product(name: "Memory", package: "swift-memory"),
@@ -111,7 +107,7 @@ let package = Package(
                 .product(name: "Memory Small", package: "swift-memory-small"),
                 .product(
                     name: "Ordinal Comparison",
-                    package: "swift-ordinal-comparison"
+                    package: "swift-ordinal"
                 ),
                 .product(
                     name: "Ordinal Standard Library Integration",
